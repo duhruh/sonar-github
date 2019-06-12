@@ -25,9 +25,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.batch.AnalysisMode;
-import org.sonar.api.batch.bootstrap.ProjectBuilder;
+import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.config.PropertyDefinitions;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.internal.ConfigurationBridge;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.MessageException;
 import org.sonar.api.utils.System2;
@@ -55,33 +55,22 @@ public class PullRequestProjectBuilderTest {
   public void prepare() {
     settings = new MapSettings(new PropertyDefinitions(GitHubPlugin.class));
     facade = mock(PullRequestFacade.class);
-    mode = mock(AnalysisMode.class);
-    pullRequestProjectBuilder = new PullRequestProjectBuilder(new GitHubPluginConfiguration(settings, new System2()), facade, mode);
+    pullRequestProjectBuilder = new PullRequestProjectBuilder(new GitHubPluginConfiguration(new ConfigurationBridge(settings), new System2()), facade);
 
   }
 
   @Test
   public void shouldDoNothing() {
-    pullRequestProjectBuilder.build(null);
+    pullRequestProjectBuilder.execute(null);
     verifyZeroInteractions(facade);
   }
 
-  @Test
-  public void shouldFailIfNotPreview() {
-    settings.setProperty(GitHubPlugin.GITHUB_PULL_REQUEST, "1");
-
-    thrown.expect(MessageException.class);
-    thrown.expectMessage("The GitHub plugin is only intended to be used in preview or issues mode. Please set 'sonar.analysis.mode'.");
-
-    pullRequestProjectBuilder.build(null);
-  }
 
   @Test
   public void shouldNotFailIfIssues() {
     settings.setProperty(GitHubPlugin.GITHUB_PULL_REQUEST, "1");
-    when(mode.isIssues()).thenReturn(true);
 
-    pullRequestProjectBuilder.build(mock(ProjectBuilder.Context.class, withSettings().defaultAnswer(RETURNS_DEEP_STUBS)));
+    pullRequestProjectBuilder.execute(mock(SensorContext.class, withSettings().defaultAnswer(RETURNS_DEEP_STUBS)));
 
     verify(facade).init(eq(1), any(File.class));
   }

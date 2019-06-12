@@ -20,45 +20,41 @@
 package org.sonar.plugins.github;
 
 import org.kohsuke.github.GHCommitState;
-import org.sonar.api.CoreProperties;
-import org.sonar.api.batch.AnalysisMode;
-import org.sonar.api.batch.bootstrap.ProjectBuilder;
-import org.sonar.api.utils.MessageException;
+import org.sonar.api.batch.sensor.Sensor;
+import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.SensorDescriptor;
 
 /**
  * Trigger load of pull request metadata at the very beginning of SQ analysis. Also
  * set "in progress" status on the pull request. 
  *
  */
-public class PullRequestProjectBuilder extends ProjectBuilder {
+public class PullRequestProjectBuilder implements Sensor {
 
   private final GitHubPluginConfiguration gitHubPluginConfiguration;
   private final PullRequestFacade pullRequestFacade;
-  private final AnalysisMode mode;
 
-  public PullRequestProjectBuilder(GitHubPluginConfiguration gitHubPluginConfiguration, PullRequestFacade pullRequestFacade, AnalysisMode mode) {
+  public PullRequestProjectBuilder(GitHubPluginConfiguration gitHubPluginConfiguration, PullRequestFacade pullRequestFacade) {
     this.gitHubPluginConfiguration = gitHubPluginConfiguration;
     this.pullRequestFacade = pullRequestFacade;
-    this.mode = mode;
+  }
+
+
+  @Override
+  public void describe(SensorDescriptor sensorDescriptor) {
+    sensorDescriptor.name("Pull Request Issue Init");
   }
 
   @Override
-  public void build(Context context) {
+  public void execute(SensorContext sensorContext) {
     if (!gitHubPluginConfiguration.isEnabled()) {
       return;
     }
-    checkMode();
+
     int pullRequestNumber = gitHubPluginConfiguration.pullRequestNumber();
-    pullRequestFacade.init(pullRequestNumber, context.projectReactor().getRoot().getBaseDir());
+    pullRequestFacade.init(pullRequestNumber, sensorContext.fileSystem().baseDir());
 
     pullRequestFacade.createOrUpdateSonarQubeStatus(GHCommitState.PENDING, "SonarQube analysis in progress");
-  }
-
-  private void checkMode() {
-    if (!mode.isIssues()) {
-      throw MessageException.of("The GitHub plugin is only intended to be used in preview or issues mode. Please set '" + CoreProperties.ANALYSIS_MODE + "'.");
-    }
 
   }
-
 }

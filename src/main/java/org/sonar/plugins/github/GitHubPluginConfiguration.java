@@ -25,14 +25,14 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.CheckForNull;
 import org.sonar.api.CoreProperties;
-import org.sonar.api.batch.BatchSide;
 import org.sonar.api.batch.InstantiationStrategy;
 import org.sonar.api.batch.ScannerSide;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.Configuration;
 import org.sonar.api.utils.MessageException;
 import org.sonar.api.utils.System2;
 import org.sonar.api.utils.log.Logger;
@@ -54,12 +54,12 @@ public class GitHubPluginConfiguration {
   public static final String HTTP_PROXY_USER = "http.proxyUser";
   public static final String HTTP_PROXY_PASS = "http.proxyPassword";
 
-  private final Settings settings;
+  private final Configuration settings;
   private final System2 system2;
   private final Pattern gitSshPattern;
   private final Pattern gitHttpPattern;
 
-  public GitHubPluginConfiguration(Settings settings, System2 system2) {
+  public GitHubPluginConfiguration(Configuration settings, System2 system2) {
     this.settings = settings;
     this.system2 = system2;
     this.gitSshPattern = Pattern.compile(".*@github\\.com:(.*/.*)\\.git");
@@ -67,39 +67,67 @@ public class GitHubPluginConfiguration {
   }
 
   public int pullRequestNumber() {
-    return settings.getInt(GitHubPlugin.GITHUB_PULL_REQUEST);
+    Optional<Integer> pr = settings.getInt(GitHubPlugin.GITHUB_PULL_REQUEST);
+
+    return pr.orElse(-1);
   }
 
   public String repository() {
     if (settings.hasKey(GitHubPlugin.GITHUB_REPO)) {
       return repoFromProp();
     }
-    if (isNotBlank(settings.getString(CoreProperties.LINKS_SOURCES_DEV)) || isNotBlank(settings.getString(CoreProperties.LINKS_SOURCES))) {
+    String linkSourcesDev = null;
+    String linkSources = null;
+
+    if (settings.get(CoreProperties.LINKS_SOURCES_DEV).isPresent()) {
+      linkSourcesDev = settings.get(CoreProperties.LINKS_SOURCES_DEV).get();
+    }
+
+    if (settings.get(CoreProperties.LINKS_SOURCES).isPresent()){
+      linkSources = settings.get(CoreProperties.LINKS_SOURCES).get();
+    }
+
+    if (isNotBlank(linkSourcesDev) || isNotBlank(linkSources)) {
       return repoFromScmProps();
     }
+
     throw MessageException.of("Unable to determine GitHub repository name for this project. Please provide it using property '" + GitHubPlugin.GITHUB_REPO
       + "' or configure property '" + CoreProperties.LINKS_SOURCES + "'.");
   }
 
   private String repoFromScmProps() {
     String repo = null;
-    if (isNotBlank(settings.getString(CoreProperties.LINKS_SOURCES_DEV))) {
-      String url = settings.getString(CoreProperties.LINKS_SOURCES_DEV);
+
+    String linkSourcesDev = null;
+
+    if (settings.get(CoreProperties.LINKS_SOURCES_DEV).isPresent()) {
+      linkSourcesDev = settings.get(CoreProperties.LINKS_SOURCES_DEV).get();
+    }
+
+    if (isNotBlank(linkSourcesDev)) {
+      String url = linkSourcesDev;
       repo = extractRepoFromGitUrl(url);
     }
-    if (repo == null && isNotBlank(settings.getString(CoreProperties.LINKS_SOURCES))) {
-      String url = settings.getString(CoreProperties.LINKS_SOURCES);
+
+    String linkSources = null;
+
+    if (settings.get(CoreProperties.LINKS_SOURCES).isPresent()){
+      linkSources = settings.get(CoreProperties.LINKS_SOURCES).get();
+    }
+
+    if (repo == null && isNotBlank(linkSources)) {
+      String url = linkSources;
       repo = extractRepoFromGitUrl(url);
     }
     if (repo == null) {
       throw MessageException.of("Unable to parse GitHub repository name for this project. Please check configuration:\n  * " + CoreProperties.LINKS_SOURCES_DEV
-        + ": " + settings.getString(CoreProperties.LINKS_SOURCES_DEV) + "\n  * " + CoreProperties.LINKS_SOURCES + ": " + settings.getString(CoreProperties.LINKS_SOURCES));
+        + ": " + linkSourcesDev + "\n  * " + CoreProperties.LINKS_SOURCES + ": " + linkSources);
     }
     return repo;
   }
 
   private String repoFromProp() {
-    String urlOrRepo = settings.getString(GitHubPlugin.GITHUB_REPO);
+    String urlOrRepo = settings.get(GitHubPlugin.GITHUB_REPO).get();
     String repo = extractRepoFromGitUrl(urlOrRepo);
     if (repo == null) {
       return urlOrRepo;
@@ -122,7 +150,7 @@ public class GitHubPluginConfiguration {
 
   @CheckForNull
   public String oauth() {
-    return settings.getString(GitHubPlugin.GITHUB_OAUTH);
+    return settings.get(GitHubPlugin.GITHUB_OAUTH).orElse("");
   }
 
   public boolean isEnabled() {
@@ -130,11 +158,11 @@ public class GitHubPluginConfiguration {
   }
 
   public String endpoint() {
-    return settings.getString(GitHubPlugin.GITHUB_ENDPOINT);
+    return settings.get(GitHubPlugin.GITHUB_ENDPOINT).orElse("https://api.github.com");
   }
 
   public boolean tryReportIssuesInline() {
-    return !settings.getBoolean(GitHubPlugin.GITHUB_DISABLE_INLINE_COMMENTS);
+    return !settings.getBoolean(GitHubPlugin.GITHUB_DISABLE_INLINE_COMMENTS).orElse(false);
   }
 
   /**

@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.CoreProperties;
 import org.sonar.api.config.PropertyDefinitions;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.internal.ConfigurationBridge;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.MessageException;
 import org.sonar.api.utils.System2;
@@ -46,7 +46,7 @@ public class GitHubPluginConfigurationTest {
   @Before
   public void prepare() {
     settings = new MapSettings(new PropertyDefinitions(GitHubPlugin.class));
-    config = new GitHubPluginConfiguration(settings, new System2());
+    config = new GitHubPluginConfiguration(new ConfigurationBridge(settings), new System2());
   }
 
   @Test
@@ -120,7 +120,7 @@ public class GitHubPluginConfigurationTest {
   @Test
   public void testProxyConfiguration() {
     System2 system2 = mock(System2.class);
-    config = new GitHubPluginConfiguration(settings, system2);
+    config = new GitHubPluginConfiguration(new ConfigurationBridge(settings), system2);
     assertThat(config.isProxyConnectionEnabled()).isFalse();
     when(system2.property("http.proxyHost")).thenReturn("foo");
     assertThat(config.isProxyConnectionEnabled()).isTrue();

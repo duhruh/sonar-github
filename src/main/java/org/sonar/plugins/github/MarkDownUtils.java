@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
@@ -30,7 +31,7 @@ import org.sonar.api.CoreProperties;
 import org.sonar.api.batch.InstantiationStrategy;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.batch.rule.Severity;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.Configuration;
 
 @ScannerSide
 @InstantiationStrategy(InstantiationStrategy.PER_BATCH)
@@ -39,13 +40,18 @@ public class MarkDownUtils {
   private static final String IMAGES_ROOT_URL = "https://sonarsource.github.io/sonar-github/";
   private final String ruleUrlPrefix;
 
-  public MarkDownUtils(Settings settings) {
+  public MarkDownUtils(Configuration settings) {
     // If server base URL was not configured in SQ server then is is better to take URL configured on batch side
-    String baseUrl = settings.hasKey(CoreProperties.SERVER_BASE_URL) ? settings.getString(CoreProperties.SERVER_BASE_URL) : settings.getString("sonar.host.url");
-    if (!baseUrl.endsWith("/")) {
-      baseUrl += "/";
+    Optional<String> baseUrl = settings.hasKey(CoreProperties.SERVER_BASE_URL) ? settings.get(CoreProperties.SERVER_BASE_URL) : settings.get("sonar.host.url");
+    String base = "";
+    if (baseUrl.isPresent()) {
+      base = baseUrl.get();
     }
-    this.ruleUrlPrefix = baseUrl;
+
+    if (!base.endsWith("/")) {
+      base += "/";
+    }
+    this.ruleUrlPrefix = base;
   }
 
   public String inlineIssue(Severity severity, String message, String ruleKey) {

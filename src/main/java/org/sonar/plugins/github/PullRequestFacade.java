@@ -44,7 +44,6 @@ import org.kohsuke.github.GHPullRequestReviewComment;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
-import org.sonar.api.batch.BatchSide;
 import org.sonar.api.batch.InstantiationStrategy;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.batch.fs.InputComponent;
@@ -199,7 +198,8 @@ public class PullRequestFacade {
   }
 
   String getPath(InputPath inputPath) {
-    return new PathResolver().relativePath(gitBaseDir, inputPath.file());
+    File f = new File(inputPath.uri());
+    return new PathResolver().relativePath(gitBaseDir, f);
   }
 
   /**
@@ -273,25 +273,28 @@ public class PullRequestFacade {
   }
 
   public void createOrUpdateSonarQubeStatus(GHCommitState status, String statusDescription) {
-    try {
-      // Copy previous targetUrl in case it was set by an external system (like the CI job).
       String targetUrl = null;
       GHCommitStatus lastStatus = getCommitStatusForContext(pr, COMMIT_CONTEXT);
       if (lastStatus != null) {
-        targetUrl = lastStatus.getTargetUrl();
+          targetUrl = lastStatus.getTargetUrl();
       }
-      ghRepo.createCommitStatus(pr.getHead().getSha(), status, targetUrl, statusDescription, COMMIT_CONTEXT);
-    } catch (FileNotFoundException e) {
-      String msg = "Unable to set pull request status. GitHub account probably miss push permission on the repository.";
-      if (LOG.isDebugEnabled()) {
-        LOG.warn(msg, e);
-      } else {
-        LOG.warn(msg);
-      }
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to update commit status", e);
-    }
+      createOrUpdateSonarQubeStatusWithTargetURL(status, statusDescription, targetUrl);
   }
+
+    public void createOrUpdateSonarQubeStatusWithTargetURL(GHCommitState status, String statusDescription, String targetUrl) {
+        try {
+            ghRepo.createCommitStatus(pr.getHead().getSha(), status, targetUrl, statusDescription, COMMIT_CONTEXT);
+        } catch (FileNotFoundException e) {
+            String msg = "Unable to set pull request status. GitHub account probably miss push permission on the repository.";
+            if (LOG.isDebugEnabled()) {
+                LOG.warn(msg, e);
+            } else {
+                LOG.warn(msg);
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to update commit status", e);
+        }
+    }
 
   @CheckForNull
   public URL getGithubUrl(@Nullable InputComponent inputComponent, @Nullable Integer issueLine) {

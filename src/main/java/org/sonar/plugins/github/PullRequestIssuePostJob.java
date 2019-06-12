@@ -25,12 +25,16 @@ import java.util.Map;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.GHCommitState;
+import org.sonar.api.Startable;
 import org.sonar.api.batch.fs.InputComponent;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.InputModuleHierarchy;
 import org.sonar.api.batch.postjob.PostJob;
 import org.sonar.api.batch.postjob.PostJobContext;
 import org.sonar.api.batch.postjob.PostJobDescriptor;
 import org.sonar.api.batch.postjob.issue.PostJobIssue;
+import org.sonar.api.config.Configuration;
+import org.sonar.api.platform.Server;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -45,11 +49,19 @@ public class PullRequestIssuePostJob implements PostJob {
   private final PullRequestFacade pullRequestFacade;
   private final GitHubPluginConfiguration gitHubPluginConfiguration;
   private final MarkDownUtils markDownUtils;
+  private final InputModuleHierarchy moduleHierarchy;
+  private final Server server;
+  private final Configuration settings;
 
-  public PullRequestIssuePostJob(GitHubPluginConfiguration gitHubPluginConfiguration, PullRequestFacade pullRequestFacade, MarkDownUtils markDownUtils) {
+  public PullRequestIssuePostJob(GitHubPluginConfiguration gitHubPluginConfiguration, PullRequestFacade pullRequestFacade,
+                                 MarkDownUtils markDownUtils, Server server, InputModuleHierarchy moduleHierarchy,
+                                 Configuration settings) {
     this.gitHubPluginConfiguration = gitHubPluginConfiguration;
     this.pullRequestFacade = pullRequestFacade;
     this.markDownUtils = markDownUtils;
+    this.server = server;
+    this.moduleHierarchy = moduleHierarchy;
+    this.settings = settings;
   }
 
   @Override
@@ -62,16 +74,17 @@ public class PullRequestIssuePostJob implements PostJob {
   @Override
   public void execute(PostJobContext context) {
     GlobalReport report = new GlobalReport(markDownUtils, gitHubPluginConfiguration.tryReportIssuesInline());
+    DashboardHelper helper = new DashboardHelper(server, moduleHierarchy, settings);
     try {
-      Map<InputFile, Map<Integer, StringBuilder>> commentsToBeAddedByLine = processIssues(report, context.issues());
-
-      updateReviewComments(commentsToBeAddedByLine);
+//      Map<InputFile, Map<Integer, StringBuilder>> commentsToBeAddedByLine = processIssues(report, context.issues());
+//
+//      updateReviewComments(commentsToBeAddedByLine);
 
       pullRequestFacade.deleteOutdatedComments();
 
       pullRequestFacade.createOrUpdateGlobalComments(report.hasNewIssue() ? report.formatForMarkdown() : null);
 
-      pullRequestFacade.createOrUpdateSonarQubeStatus(report.getStatus(), report.getStatusDescription());
+      pullRequestFacade.createOrUpdateSonarQubeStatusWithTargetURL(report.getStatus(), report.getStatusDescription(), helper.getReportURL());
     } catch (Exception e) {
       LOG.error("SonarQube analysis failed to complete the review of this pull request", e);
       pullRequestFacade.createOrUpdateSonarQubeStatus(GHCommitState.ERROR, StringUtils.abbreviate("SonarQube analysis failed: " + e.getMessage(), 140));

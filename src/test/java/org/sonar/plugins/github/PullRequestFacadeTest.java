@@ -21,6 +21,7 @@ package org.sonar.plugins.github;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -65,7 +66,7 @@ public class PullRequestFacadeTest {
     when(pr.getHead().getSha()).thenReturn("abc123");
     facade.setPr(pr);
     InputPath inputPath = mock(InputPath.class);
-    when(inputPath.file()).thenReturn(new File(gitBasedir, "src/main/with space/Foo.java"));
+    when(inputPath.uri()).thenReturn(new URI(gitBasedir.toURI().toString()+"/src/main/with%20space/Foo.java"));
     assertThat(facade.getGithubUrl(inputPath, 10).toString()).isEqualTo("https://github.com/SonarSource/sonar-java/blob/abc123/src/main/with%20space/Foo.java#L10");
   }
 
