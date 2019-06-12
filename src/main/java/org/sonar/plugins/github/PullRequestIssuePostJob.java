@@ -76,9 +76,6 @@ public class PullRequestIssuePostJob implements PostJob {
     GlobalReport report = new GlobalReport(markDownUtils, gitHubPluginConfiguration.tryReportIssuesInline());
     DashboardHelper helper = new DashboardHelper(server, moduleHierarchy, settings);
     try {
-//      Map<InputFile, Map<Integer, StringBuilder>> commentsToBeAddedByLine = processIssues(report, context.issues());
-//
-//      updateReviewComments(commentsToBeAddedByLine);
 
       pullRequestFacade.deleteOutdatedComments();
 
