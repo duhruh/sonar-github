@@ -24,6 +24,8 @@ import org.sonar.api.Plugin;
 import org.sonar.api.Properties;
 import org.sonar.api.Property;
 import org.sonar.api.PropertyType;
+import org.sonar.plugins.github.sensor.StatusSensor;
+import org.sonar.plugins.github.task.PostStatusAnalysis;
 
 @Properties({
   @Property(
@@ -36,7 +38,8 @@ import org.sonar.api.PropertyType;
     key = GitHubPlugin.GITHUB_OAUTH,
     name = "GitHub OAuth token",
     description = "Authentication token",
-    global = false,
+    project = true,
+    global = true,
     type = PropertyType.PASSWORD),
   @Property(
     key = GitHubPlugin.GITHUB_REPO,
@@ -44,14 +47,6 @@ import org.sonar.api.PropertyType;
     description = "GitHub repository for this project. Will be guessed from '" + CoreProperties.LINKS_SOURCES_DEV + "' if present",
     project = false,
     global = false),
-  @Property(
-    key = GitHubPlugin.GITHUB_PULL_REQUEST,
-    name = "GitHub Pull Request",
-    description = "Pull request number",
-    project = false,
-    module = false,
-    global = false,
-    type = PropertyType.INTEGER),
   @Property(
     key = GitHubPlugin.GITHUB_DISABLE_INLINE_COMMENTS,
     defaultValue = "false",
@@ -66,17 +61,15 @@ public class GitHubPlugin implements Plugin {
   public static final String GITHUB_ENDPOINT = "sonar.github.endpoint";
   public static final String GITHUB_OAUTH = "sonar.github.oauth";
   public static final String GITHUB_REPO = "sonar.github.repository";
-  public static final String GITHUB_PULL_REQUEST = "sonar.github.pullRequest";
   public static final String GITHUB_DISABLE_INLINE_COMMENTS = "sonar.github.disableInlineComments";
 
   @Override
   public void define(Context context) {
     context.addExtensions(
-      PullRequestIssuePostJob.class,
-      GitHubPluginConfiguration.class,
-      PullRequestProjectBuilder.class,
-      PullRequestFacade.class,
-      MarkDownUtils.class);
+            PostStatusAnalysis.class,
+      StatusSensor.class,
+            GitHubService.class,
+            DashboardHelper.class);
   }
 
 }
