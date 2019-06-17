@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.github;
 
+import org.sonar.api.CoreProperties;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.core.config.ScannerProperties;
 
@@ -30,5 +31,6 @@ public class ContextCopy {
         context.addContextProperty(GitHubPlugin.GITHUB_ENDPOINT, context.config().get(GitHubPlugin.GITHUB_ENDPOINT).orElse(""));
         context.addContextProperty(GitHubPlugin.GITHUB_REPO, context.config().get(GitHubPlugin.GITHUB_REPO).orElse(""));
         context.addContextProperty(ScannerProperties.BRANCH_NAME, context.config().get(ScannerProperties.BRANCH_NAME).orElse(""));
+        context.addContextProperty(CoreProperties.PROJECT_KEY_PROPERTY, context.config().get(CoreProperties.PROJECT_KEY_PROPERTY).orElse(""));
     }
 }

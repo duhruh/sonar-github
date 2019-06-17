@@ -51,7 +51,7 @@ public class DashboardHelper {
 
     public String getReportURL(Configuration config){
 
-        String effectiveKey = config.get(CoreProperties.PROJECT_NAME_PROPERTY).orElse("");
+        String effectiveKey = config.get(CoreProperties.PROJECT_KEY_PROPERTY).orElse("");
         String branch = config.get(ScannerProperties.BRANCH_NAME).orElse("");
 
         return getReportURL(effectiveKey, branch);

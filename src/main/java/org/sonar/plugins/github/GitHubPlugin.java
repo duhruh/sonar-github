@@ -28,33 +28,33 @@ import org.sonar.plugins.github.sensor.StatusSensor;
 import org.sonar.plugins.github.task.PostStatusAnalysis;
 
 @Properties({
-  @Property(
-    key = GitHubPlugin.GITHUB_ENDPOINT,
-    defaultValue = "https://api.github.com",
-    name = "GitHub API Endpoint",
-    description = "URL to access GitHub WS API. Default value is fine for public GitHub. Can be modified for GitHub enterprise.",
-    global = true),
-  @Property(
-    key = GitHubPlugin.GITHUB_OAUTH,
-    name = "GitHub OAuth token",
-    description = "Authentication token",
-    project = true,
-    global = true,
-    type = PropertyType.PASSWORD),
-  @Property(
-    key = GitHubPlugin.GITHUB_REPO,
-    name = "GitHub repository",
-    description = "GitHub repository for this project. Will be guessed from '" + CoreProperties.LINKS_SOURCES_DEV + "' if present",
-    project = false,
-    global = false),
-  @Property(
-    key = GitHubPlugin.GITHUB_DISABLE_INLINE_COMMENTS,
-    defaultValue = "false",
-    name = "Disable issue reporting as inline comments",
-    description = "Issues will not be reported as inline comments but only in the global summary comment",
-    project = true,
-    global = true,
-    type = PropertyType.BOOLEAN)
+        @Property(
+                key = GitHubPlugin.GITHUB_ENDPOINT,
+                defaultValue = "https://api.github.com",
+                name = "GitHub API Endpoint",
+                description = "URL to access GitHub WS API. Default value is fine for public GitHub. Can be modified for GitHub enterprise.",
+                global = true),
+        @Property(
+                key = GitHubPlugin.GITHUB_OAUTH,
+                name = "GitHub OAuth token",
+                description = "Authentication token",
+                project = true,
+                global = true,
+                type = PropertyType.PASSWORD),
+        @Property(
+                key = GitHubPlugin.GITHUB_REPO,
+                name = "GitHub repository",
+                description = "GitHub repository for this project. Will be guessed from '" + CoreProperties.LINKS_SOURCES_DEV + "' if present",
+                project = false,
+                global = false),
+        @Property(
+                key = GitHubPlugin.GITHUB_DISABLE_INLINE_COMMENTS,
+                defaultValue = "false",
+                name = "Disable issue reporting as inline comments",
+                description = "Issues will not be reported as inline comments but only in the global summary comment",
+                project = true,
+                global = true,
+                type = PropertyType.BOOLEAN)
 })
 public class GitHubPlugin implements Plugin {
 
@@ -67,7 +67,7 @@ public class GitHubPlugin implements Plugin {
   public void define(Context context) {
     context.addExtensions(
             PostStatusAnalysis.class,
-      StatusSensor.class,
+            StatusSensor.class,
             GitHubService.class,
             DashboardHelper.class);
   }

@@ -29,6 +29,7 @@ import org.sonar.plugins.github.GitHubService;
 import java.io.IOException;
 
 public class PostStatusAnalysis implements PostProjectAnalysisTask {
+    private static final String CONTEXT = "sonarqube";
 
     private final DashboardHelper dashboardHelper;
 
@@ -48,9 +49,25 @@ public class PostStatusAnalysis implements PostProjectAnalysisTask {
         try {
             service.setRepository(analysis.getScannerContext().getProperties().get(GitHubPlugin.GITHUB_REPO));
             service.setRef(analysis.getScannerContext().getProperties().get(ScannerProperties.BRANCH_NAME));
-            service.createSonarQubeStatus(GHCommitState.PENDING, "SonarQube analysis in progress", dashboardHelper.getReportURL(analysis),"sonarqube");
+
+            GHCommitState state = GHCommitState.ERROR;
+            String message = "SonarQube analysis error";
+
+            switch(analysis.getCeTask().getStatus()){
+                case SUCCESS:
+                    state = GHCommitState.SUCCESS;
+                    message = "SonarQube analysis succeeded";
+                    break;
+                case FAILED:
+                    state = GHCommitState.FAILURE;
+                    message = "SonarQube analysis failed";
+                    break;
+            }
+
+            service.createSonarQubeStatus(state, message, dashboardHelper.getReportURL(analysis), CONTEXT);
+
         } catch (IOException e) {
-            service.createSonarQubeStatus(GHCommitState.FAILURE, "SonarQube analysis failed", dashboardHelper.getReportURL(analysis),"sonarqube");
+            service.createSonarQubeStatus(GHCommitState.FAILURE, "SonarQube analysis failed", dashboardHelper.getReportURL(analysis),CONTEXT);
         }
     }
 }
