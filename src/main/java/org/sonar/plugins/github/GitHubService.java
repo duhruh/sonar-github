@@ -89,7 +89,7 @@ public class GitHubService {
             this.sha1 = repository.getPullRequest(pr).getHead().getSha();
         }catch (Exception e){
             try {
-                this.sha1 = repository.getBranch(ref).getSHA1();
+                this.sha1 = repository.getTree(ref).getSha();
             } catch (IOException ex) {
                 throw new IllegalStateException("unknown reference:"+ref, e);
             }

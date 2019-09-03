@@ -21,6 +21,7 @@ package org.sonar.plugins.github.task;
 
 import org.kohsuke.github.GHCommitState;
 import org.sonar.api.ce.posttask.PostProjectAnalysisTask;
+import org.sonar.api.ce.posttask.QualityGate;
 import org.sonar.core.config.ScannerProperties;
 import org.sonar.plugins.github.DashboardHelper;
 import org.sonar.plugins.github.GitHubPlugin;
@@ -39,6 +40,10 @@ public class PostStatusAnalysis implements PostProjectAnalysisTask {
 
     @Override
     public void finished(ProjectAnalysis analysis) {
+        if (!analysis.getScannerContext().getProperties().get(GitHubPlugin.GITHUB_ENABLED).equals("true")){
+            return; // skipping
+        }
+
         GitHubService service = null;
         try {
             service = new GitHubService(analysis.getScannerContext());
@@ -53,15 +58,23 @@ public class PostStatusAnalysis implements PostProjectAnalysisTask {
             GHCommitState state = GHCommitState.ERROR;
             String message = "SonarQube analysis error";
 
-            switch(analysis.getCeTask().getStatus()){
-                case SUCCESS:
-                    state = GHCommitState.SUCCESS;
-                    message = "SonarQube analysis succeeded";
-                    break;
-                case FAILED:
-                    state = GHCommitState.FAILURE;
-                    message = "SonarQube analysis failed";
-                    break;
+            QualityGate gate = analysis.getQualityGate();
+
+            if (gate != null) {
+                switch (gate.getStatus()) {
+                    case OK:
+                        state = GHCommitState.SUCCESS;
+                        message = "SonarQube analysis succeeded";
+                        break;
+                    case WARN:
+                        state = GHCommitState.FAILURE;
+                        message = "SonarQube analysis found some warnings";
+                        break;
+                    case ERROR:
+                        state = GHCommitState.FAILURE;
+                        message = "SonarQube analysis failed";
+                        break;
+                }
             }
 
             service.createSonarQubeStatus(state, message, dashboardHelper.getReportURL(analysis), CONTEXT);
