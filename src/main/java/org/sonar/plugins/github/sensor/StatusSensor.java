@@ -50,6 +50,9 @@ public class StatusSensor implements Sensor {
     @Override
     public void execute(SensorContext context) {
         ContextCopy.copyIntoContext(context);
+        if (!context.config().get(GitHubPlugin.GITHUB_ENABLED).orElse("false").equals("true")) {
+            return; // skipping sensor
+        }
         try {
             service.setRepository(context.config().get(GitHubPlugin.GITHUB_REPO).orElse(""));
             service.setRef(context.config().get(ScannerProperties.BRANCH_NAME).orElse(""));

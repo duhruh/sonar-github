@@ -30,6 +30,7 @@ public class ContextCopy {
         context.addContextProperty(GitHubPlugin.GITHUB_OAUTH, context.config().get(GitHubPlugin.GITHUB_OAUTH).orElse(""));
         context.addContextProperty(GitHubPlugin.GITHUB_ENDPOINT, context.config().get(GitHubPlugin.GITHUB_ENDPOINT).orElse(""));
         context.addContextProperty(GitHubPlugin.GITHUB_REPO, context.config().get(GitHubPlugin.GITHUB_REPO).orElse(""));
+        context.addContextProperty(GitHubPlugin.GITHUB_ENABLED, context.config().get(GitHubPlugin.GITHUB_ENABLED).orElse("false"));
         context.addContextProperty(ScannerProperties.BRANCH_NAME, context.config().get(ScannerProperties.BRANCH_NAME).orElse(""));
         context.addContextProperty(CoreProperties.PROJECT_KEY_PROPERTY, context.config().get(CoreProperties.PROJECT_KEY_PROPERTY).orElse(""));
     }

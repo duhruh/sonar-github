@@ -29,6 +29,14 @@ import org.sonar.plugins.github.task.PostStatusAnalysis;
 
 @Properties({
         @Property(
+                key = GitHubPlugin.GITHUB_ENABLED,
+                name = "GitHub Status Enabled",
+                description = "If set to true will update pr status",
+                project = true,
+                global = true,
+                defaultValue = "false",
+                type = PropertyType.BOOLEAN),
+        @Property(
                 key = GitHubPlugin.GITHUB_ENDPOINT,
                 defaultValue = "https://api.github.com",
                 name = "GitHub API Endpoint",
@@ -61,6 +69,7 @@ public class GitHubPlugin implements Plugin {
   public static final String GITHUB_ENDPOINT = "sonar.github.endpoint";
   public static final String GITHUB_OAUTH = "sonar.github.oauth";
   public static final String GITHUB_REPO = "sonar.github.repository";
+  public static final String GITHUB_ENABLED = "sonar.github.enabled";
   public static final String GITHUB_DISABLE_INLINE_COMMENTS = "sonar.github.disableInlineComments";
 
   @Override
