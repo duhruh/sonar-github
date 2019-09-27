@@ -43,7 +43,7 @@ public class DashboardHelper {
     }
 
     public String getReportURL(PostProjectAnalysisTask.ProjectAnalysis analysis) {
-        String effectiveKey = analysis.getProject().getName();
+        String effectiveKey = analysis.getProject().getKey();
         Branch branch = analysis.getBranch().get();
 
         return getReportURL(effectiveKey, branch.getName().orElse(""));
